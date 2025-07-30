@@ -1,6 +1,23 @@
 import streamlit as st
 import pandas as pd
 
+
+
+def calc_general_stats(df):
+    df_data = df.groupby(by='Data')[['Valor']].sum()
+    df_data['lag_1'] = df_data['Valor'].shift(1)
+    df_data['diferença Mensal'] = df_data['Valor'] -df_data ['lag_1']
+    df_data['Média 6 M diferença Mensal'] = df_data['diferença Mensal'].rolling(6).mean()
+    df_data['Média 12 M diferença Mensal'] = df_data['diferença Mensal'].rolling(12).mean()
+    df_data['Média 24 M diferença Mensal'] = df_data['diferença Mensal'].rolling(24).mean()
+    df_data['Média 6 M TOTAL'] = df_data['Valor'].rolling(6).apply(lambda x: x[-1] - x[0])
+    df_data['Média 12 M TOTAL'] = df_data['Valor'].rolling(12).apply(lambda x: x[-1] - x[0])
+    df_data['Média 24 M TOTAL'] = df_data['Valor'].rolling(24).apply(lambda x: x[-1] - x[0])
+    return df_data
+
+
+
+
 st.set_page_config(page_title='Finanças',page_icon='💰')
 
 st.text('Olá Mundo!')
@@ -27,9 +44,10 @@ if file_upload:
     #Visao isntitiuição
     exp2=st.expander('Intituições')
     df_instituicao = df.pivot_table(index='Data', columns='Instituição', values='Valor')
-    
     tab_data,tab_history,tab_share = exp2.tabs(['Dados','Histórico','Distribuição'])
 
+
+    # Abas para distribuição dos dados
     with tab_data:
         st.dataframe(df_instituicao)
 
@@ -52,3 +70,9 @@ if file_upload:
         else:
             st.bar_chart(df_instituicao.loc[date])
     
+
+    
+    df_stats = calc_general_stats(df)
+    st.dataframe(df_stats)
+
+
